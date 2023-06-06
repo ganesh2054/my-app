@@ -48,38 +48,53 @@ function App() {
         console.log('The following error occurred: ' + err);
       });
 
-    function draw() {
-      animationRef.current = requestAnimationFrame(draw);
 
-      analyser.getByteFrequencyData(dataArray);
-      const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
 
-      const maxHeight = 30;  // change this value as needed
-      const barHeight = Math.min(average * 2, maxHeight);
+   function draw() {
+  animationRef.current = requestAnimationFrame(draw);
 
-      barQueueRef.current.push({
-        height: barHeight,
-        x: canvas.width,
-      });
+  analyser.getByteFrequencyData(dataArray);
+  const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
 
-      if (barQueueRef.current.length > canvas.width / 3) {
-        barQueueRef.current.shift();
-      }
+  const maxHeight = 30;  // change this value as needed
+  const barHeight = Math.min(average * 2, maxHeight);
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const middleY = canvas.height / 2;
-      for (let i = 0; i < barQueueRef.current.length; i++) {
-        const bar = barQueueRef.current[i];
+  barQueueRef.current.push({
+    height: barHeight,
+    x: canvas.width,
+    shake: Math.random() * 2 - 1,  // initial shake value, between -5 and 5
+    shakeDirection: Math.random() < 0.5 ? -0.1 : 0.1  // initial shake direction, either -1 or 1
+  });
 
-        ctx.fillStyle = 'blue';
-        ctx.fillRect(bar.x, middleY - bar.height / 2, 2, bar.height);
+  if (barQueueRef.current.length > canvas.width / 3) {
+    barQueueRef.current.shift();
+  }
 
-        ctx.fillStyle = 'blue'
-        // ctx.fillRect(bar.x, middleY + bar.height / 2, 2, bar.height);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const middleY = canvas.height / 2;
+  for (let i = 0; i < barQueueRef.current.length; i++) {
+    const bar = barQueueRef.current[i];
 
-        bar.x -= 3;
-      }
+    // change shake direction if shake value exceeds a certain limit
+    if (bar.shake > 1 || bar.shake < -1) {
+      bar.shakeDirection *= -1;
     }
+
+    bar.shake += bar.shakeDirection;  // change shake value
+
+    ctx.fillStyle = 'blue';
+    ctx.fillRect(bar.x, middleY - bar.height / 2 + bar.shake, 2.5, bar.height);  // apply shake value to y position
+
+    bar.x -= 6;
+  }
+}
+
+    
+  
+    
+
+
+
   }
   const stop = () => {
     if (mediaRecorder) {
@@ -110,11 +125,10 @@ function App() {
       }
     };
   }, [mediaRecorder]);
-  console.log(status, 'status')
 
   return (
-    <div style={{ margin: 'auto', display: 'block' }}>
-      <canvas ref={canvasRef} width={'800px'} height={'400px'}></canvas>
+    <div style={{ margin: '50px', display: 'block' }}>
+      <canvas ref={canvasRef} width={'900px'} height={'100px'}></canvas>
       {audioUrl && <audio controls src={audioUrl} />}
       <button onClick={status === "notStarted" ? record : status === "started" ? pause : status === 'paused' ? resume : pause}>{`${status === 'notStarted' ? 'record' : status === 'started' ? 'pause' : status === 'paused' ? 'resume' : 'pause'}`}</button>
       <button onClick={stop}>stop</button>
